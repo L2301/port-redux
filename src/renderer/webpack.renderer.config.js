@@ -6,7 +6,6 @@ const FixNedb = require('../../webpack.fixnedbpath');
 
 rules.push({
   test: /\.css$/i,
-  exclude: /node_modules/,
   use: [
     {
       loader: MiniCssExtractPlugin.loader,
@@ -34,8 +33,4 @@ module.exports = {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css'],
     plugins: [new FixNedb()]
   },
-  // stats: 'verbose',
-  // devServer: {
-  //   stats: 'verbose'
-  // }
 };

@@ -1,6 +1,5 @@
-import { app, autoUpdater, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import findOpenSocket from '../renderer/client/find-open-socket'
-import isDev from 'electron-is-dev'
 import { isOSX } from './helpers';
 import { createMainWindow } from './main-window';
 import { Cleanup } from './cleanup';
@@ -8,9 +7,15 @@ import { Cleanup } from './cleanup';
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const BACKGROUND_WINDOW_WEBPACK_ENTRY: string;
 
+const isDev = !app.isPackaged;
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
-  app.quit();
+try {
+  if (require('electron-squirrel-startup')) {
+    app.quit();
+  }
+} catch (_) {
+  // electron-squirrel-startup not available
 }
 
 let mainWindow: BrowserWindow;
@@ -28,38 +33,6 @@ ipcMain.on('user-data-path', (event) => {
 ipcMain.on('is-dev', (event) => {
   event.returnValue = isDev;
 })
-
-if (!isDev) {
-  const server = 'https://update.electronjs.org'
-  const feed = `${server}/urbit/port/${process.platform}-${process.arch}/${app.getVersion()}`
-
-  autoUpdater.setFeedURL({
-    url: feed
-  })
-
-  autoUpdater.on('update-available', () => {
-    mainWindow.webContents.send('update-available');
-  });
-
-  autoUpdater.on('update-downloaded', () => {
-    mainWindow.webContents.send('update-downloaded');
-  })
-
-  autoUpdater.on('error', message => {
-    console.error('There was a problem updating the application')
-    console.error(message)
-  })
-} else {
-  setTimeout(() => {
-    console.log('sending update available')
-    mainWindow.webContents.send('update-available');
-
-    setTimeout(() => {
-      console.log('sending update downloaded')
-      mainWindow.webContents.send('update-downloaded');
-    }, 10 * 1000);
-  }, 45 * 1000)
-}
 
 function createBackgroundWindow(socketName: string) {
   const win = new BrowserWindow({
@@ -102,19 +75,10 @@ async function start(bootBg: boolean) {
 
   mainWindow = createMainWindow(MAIN_WINDOW_WEBPACK_ENTRY, serverSocket, app.quit.bind(this), cleanup, bgWindow)
   cleanup.setWindows(mainWindow, bgWindow);
-
-  if (!isDev) {
-    autoUpdater.checkForUpdates()
-
-    setInterval(() => {
-      autoUpdater.checkForUpdates()
-    }, 10 * 60 * 1000) //check every 10 mins for updates
-  }
 }
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on('ready', () => start(true));
 
 function beforeQuit(e) {
@@ -128,11 +92,9 @@ function beforeQuit(e) {
 }
 
 app.on('before-quit', beforeQuit);
-autoUpdater.on('before-quit-for-update', beforeQuit);
 
 app.on('activate', (event, hasVisibleWindows) => {
   if (isOSX()) {
-    // this is called when the dock is clicked
     if (!hasVisibleWindows) {
       mainWindow.show();
     } else {

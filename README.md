@@ -1,68 +1,180 @@
 # Port
 
-## PORT HAS BEEN DEPRECATED
-Port has been officially deprecated and there will be no additional feature development or bug fixes. [One-click cloud hosting
-solutions are now available](https://urbit.org/getting-started/hosted). We recommend using one of them for getting onto the Urbit network easily and affordably.
+A desktop application for running and managing [Urbit](https://urbit.org) ships. Port lets you spin up, access, and manage comets, planets, moons, and stars without any command-line knowledge.
 
-For information on migrating a ship from Port to another hosting solution, see [here](https://github.com/latter-bolden/port/wiki/Migrating-from-Port).
-
-Thanks to everyone who used Port over the years! A spiritual successor may be in the cards, stay tuned :)
-
-Much love,
-
-~nocsyx-lassul & ~latter-bolden
-
-<br/><br/>
-
-
-[![awesome urbit badge](https://img.shields.io/badge/~-awesome%20urbit-lightgrey)](https://github.com/urbit/awesome-urbit)
-
-Formerly called Taisho, Port allows you to spin up, access, and manage your ships whether they are comets, planets or potentially stars. It gives people the ability to immediately download and run Urbit without any knowledge of the command line.
+**Now updated for Vere v4.x** (the modern Urbit runtime) with builds for **Linux**, **macOS**, and **Windows**.
 
 ## Installing
 
-Head over to [releases](https://github.com/urbit/port/releases) and download the installer for your operating system from the latest release. Currently available for all major OSes. 
+Head over to [releases](https://github.com/urbit/port/releases) and download the installer for your operating system.
 
-## Screenshots
-![](https://hmillerdev.nyc3.digitaloceanspaces.com/nocsyx-lassul/taisho-welcome.jpg)  
-![](https://hmillerdev.nyc3.digitaloceanspaces.com/nocsyx-lassul/taisho-moon.jpg)
-![](https://hmillerdev.nyc3.digitaloceanspaces.com/nocsyx-lassul/taisho-boot.jpg)
-![](https://hmillerdev.nyc3.digitaloceanspaces.com/nocsyx-lassul/taisho-launch.jpg)
-![](https://hmillerdev.nyc3.digitaloceanspaces.com/nocsyx-lassul/taisho-home.jpg)
+| Platform | Format |
+|----------|--------|
+| macOS (Intel) | `.dmg` |
+| macOS (Apple Silicon) | `.dmg` (arm64) |
+| Linux | `.deb`, `.rpm`, `.zip` |
+| Windows | `.exe` (Squirrel installer) |
+
+## Development
+
+### Requirements
+
+- **Node.js** v20+ (see `.nvmrc`)
+- **npm** (ships with Node.js)
+- Build tools for native modules (`node-gyp`):
+  - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
+  - **Linux**: `build-essential`, `python3`
+  - **Windows**: Visual Studio Build Tools + Python 3
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/urbit/port.git
+cd port
+
+# Install dependencies
+npm install
+
+# Download Vere binaries for your platform
+./get-vere.sh
+
+# Start the development server
+npm start
+```
+
+### Building
+
+```bash
+# Package for current platform
+npm run package
+
+# Build distributable for specific platforms
+npm run make:mac        # macOS x64 (.dmg)
+npm run make:mac-arm    # macOS ARM64 (.dmg)
+npm run make:linux      # Linux x64 (.deb, .rpm, .zip)
+npm run make:win        # Windows x64 (.exe)
+
+# Build all platforms
+npm run make:all
+```
+
+### Downloading Vere Binaries
+
+The `get-vere.sh` script downloads [Vere](https://github.com/urbit/vere) (the Urbit runtime) binaries for all platforms:
+
+```bash
+# Download latest Vere binaries
+./get-vere.sh
+
+# Download a specific version
+./get-vere.sh v4.3
+```
+
+Binaries are placed in `resources/{mac,linux,win}/` and bundled into the app during packaging.
 
 ## Architecture
 
-The architecture is built based off of James Long's article, [The Secret of Good Electron Apps](https://archive.jlongster.com/secret-of-good-electron-apps). With one exception, in production we don't run a simple process, but a hidden background window.
+Port uses a three-process Electron architecture based on [The Secret of Good Electron Apps](https://archive.jlongster.com/secret-of-good-electron-apps):
 
-### Main
+```
+src/
+├── main/                    # Electron main process
+│   ├── index.ts             # App entry point, window lifecycle
+│   ├── main-window.ts       # Main window creation and management
+│   ├── terminal-service.ts  # PTY-based terminal windows
+│   ├── os-service-helper.ts # IPC handlers for OS operations
+│   ├── setting-service-helper.ts  # Keyboard shortcuts, protocol handling
+│   ├── cleanup.ts           # Graceful shutdown
+│   ├── helpers.ts           # Navigation, protocol links, zoom
+│   ├── menu.ts              # Application menu
+│   └── context-menu.ts      # Right-click context menus
+│
+├── background/              # Hidden background process (business logic)
+│   ├── main.ts              # Service initialization, IPC server setup
+│   ├── db/
+│   │   └── index.ts         # NeDB database (settings, piers, logs)
+│   ├── server/
+│   │   ├── ipc.ts           # Node-IPC server for RPC communication
+│   │   └── server.html      # Hidden window HTML shell
+│   └── services/
+│       ├── pier-service.ts      # Ship lifecycle (boot, stop, spawn Vere)
+│       ├── os-service.ts        # OS interactions (dialogs, views)
+│       └── settings-service.ts  # Settings persistence
+│
+├── renderer/                # React front-end
+│   ├── renderer.tsx         # React 18 entry point
+│   ├── App.tsx              # Root component, router, state
+│   ├── client/
+│   │   ├── preload.ts       # Preload script for IPC setup
+│   │   ├── ipc.ts           # Client-side IPC wrapper
+│   │   └── find-open-socket.ts  # IPC socket discovery
+│   ├── pages/               # Top-level pages
+│   ├── ship/                # Ship management components
+│   ├── details/             # Ship setup forms
+│   ├── shared/              # Reusable UI components
+│   ├── terminal/            # Terminal window (xterm.js)
+│   ├── alerts/              # Notification components
+│   ├── icons/               # SVG icons
+│   └── styles/              # CSS (Tailwind)
+│
+└── get-platform.js          # Platform detection utility
+```
 
-The main process' primary responsibility should be creation of windows and anything that requires interaction with the OS. Anything else should be diverted to the background window to ensure high performance.
+### Main Process (`src/main/`)
 
-### Background
+Creates and manages windows, handles OS-level features (menus, shortcuts, protocol links), and manages the app lifecycle. Delegates all business logic to the background process.
 
-The background folder contains all the services as well as the database client and an IPC server. Here is where most of the data and process management operations should happen. We also act as a proxy for the traditional IPC in most electron apps (not sure this is good, but it's what I went with.).
+### Background Process (`src/background/`)
 
-### Renderer
+Runs in a hidden `BrowserWindow`. Contains all the heavy lifting:
+- **PierService**: Manages ship lifecycle — spawning Vere processes, monitoring ports, handling boot/stop, error recovery
+- **SettingsService**: Persists user preferences via NeDB
+- **OSService**: Proxies OS operations (file dialogs, view management) to the main process
+- **IPC Server**: Custom Node-IPC based RPC system connecting renderer <-> background <-> main
 
-The renderer is a React + Typescript + TailwindCSS application. We use IPC to communicate only with the background process. External state like the DB is queried and mutated using react-query so that it is cached. Any internal UI state should run through either zustand or Context.
+### Renderer (`src/renderer/`)
 
-### Urbit
+React 18 application using:
+- **React Router v5** for navigation
+- **React Query** for server state (pier data from background process)
+- **Zustand** for client state
+- **Tailwind CSS** for styling
+- **Radix UI** for accessible component primitives
 
-The Urbit binaries for each respective OS should live in the `resources` folder under the respective OS' folder. They aren't included because of size, but you can get them by running the `get-urbit.sh` script.
+### Urbit/Vere Integration
 
-### Contributing
-Port is a work in progress and we would love help making it the best it can be!  Below are steps to help you get your development environment up and running.
+Port manages Urbit ships by:
+1. Downloading platform-specific Vere binaries (`get-vere.sh`)
+2. Spawning Vere as a child process with appropriate flags
+3. Monitoring `.http.ports` file to detect when a ship is running
+4. Communicating with running ships via the Dojo HTTP API (`localhost:{loopbackPort}`)
+5. Supporting graceful shutdown via `+hood/exit`
 
-#### Requirements
-- node version ^16 (Port currently does not build via node 17) https://nodejs.org
-- yarn https://yarnpkg.com/
-- node-gyp https://github.com/nodejs/node-gyp
+### Data Flow
 
-Below are steps that should get you up and running on a GNU/Linux system.
-1. Install node.js version ^16
-2. Install yarn via terminal `npm install -g yarn`
-3. Install node-gyp via terminal `npm install -g node-gyp`
+```
+Renderer (React)  ──IPC──>  Background (Services)  ──spawn──>  Vere Process
+     │                           │                                  │
+     │<──push/reply──            │<──HTTP Dojo API──                │
+     │                           │                                  │
+     │                      NeDB Database                    .http.ports
+```
 
-With these following packages you should then be able to run `yarn install` on the Port project.
+## Tech Stack
 
-![Mothership](https://hmillerdev.nyc3.digitaloceanspaces.com/nocsyx-lassul/BALEEN%20CLASS_PATREON_190519.jpg)
+| Layer | Technology |
+|-------|-----------|
+| Desktop | Electron 33 |
+| Build | Electron Forge 7 + Webpack |
+| UI | React 18 + TypeScript 5 |
+| Styling | Tailwind CSS 3 |
+| State | Zustand 4 + React Query 3 |
+| Database | NeDB (embedded) |
+| IPC | Node-IPC |
+| Terminal | xterm.js 5 + node-pty |
+| Urbit Runtime | Vere v4.x |
+
+## License
+
+MIT

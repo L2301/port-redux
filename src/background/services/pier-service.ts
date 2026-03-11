@@ -5,15 +5,12 @@ import { shell, ipcRenderer } from 'electron';
 import axios from 'axios'
 import { DB } from '../db'
 import { HandlerEntry } from '../server/ipc';
-import { getPlatform, getPlatformPathSegments } from '../../get-platform';
-import { rootPath as root } from 'electron-root-path';
+import { getPlatform } from '../../get-platform';
 import appRootDir from 'app-root-dir'
-import { unlink, mkdir, rmdir, access, readFile, readdirSync } from 'fs'
+import { unlink, mkdir, rmdir, access, readFile, readdirSync, rename } from 'fs'
 import { promisify } from 'util'
 import ADMZip from 'adm-zip'
-import mv from 'mv'
 import { each } from 'async';
-
 
 const isDev = ipcRenderer.sendSync('is-dev');
 const IS_PROD = !isDev;
@@ -25,6 +22,7 @@ const asyncAccess = promisify(access);
 const asyncRead = promisify(readFile);
 const asyncMkdir = promisify(mkdir);
 const asyncExec = promisify(exec);
+const asyncRename = promisify(rename);
 
 const userData = ipcRenderer.sendSync('user-data-path');
 
@@ -139,7 +137,6 @@ export class PierService {
 
         let query = {
             $where: function () {
-                // current log is passed via "this"
                 let stamp = (new Date(this.time)).getTime();
                 return THIRTY_DAYS_AGO > stamp;
             }
@@ -308,7 +305,6 @@ export class PierService {
         const webLive = await this.checkUrlAccessible(`http://localhost:${ports.web}`);
 
         if (check && pier.shipName && check.trim() !== pier.shipName.trim()) {
-            // a different ship is running on this port
             return null;
         }
 
@@ -359,15 +355,10 @@ export class PierService {
 
     async collectExistingPier(data: AddPier): Promise<Pier> {
         const pier = await this.addPier({ ...data, startupPhase: 'initialized' });
-        await new Promise((resolve, reject) => {
-            mv(data.directory, joinPath(this.pierDirectory, pier.slug), { mkdirp: true }, (error) => {
-                if (error) {
-                    return reject(error)
-                }
+        const src = data.directory;
+        const dest = joinPath(this.pierDirectory, pier.slug);
 
-                return resolve(true)
-            })
-        })
+        await asyncRename(src, dest);
 
         return await this.updatePier(pier.slug, { directory: this.pierDirectory });
     }
@@ -504,13 +495,12 @@ export class PierService {
         setTimeout(() => {
             try {
                 console.log('attempting ota');
-                //make sure OTAs start |ota (sein:title our now our) %kids
                 this.dojo(`http://localhost:${ports.loopback}`, {
                     sink: {
                         app: 'hood'
                     },
                     source: {
-                        dojo: '+hood/ota (sein:title our now our)'//old '+hood/install (sein:title our now our) %kids, =local %base'
+                        dojo: '+hood/ota (sein:title our now our)'
                     }
                 })
             } catch (err) {
@@ -522,7 +512,6 @@ export class PierService {
     async stopPier(pier: Pier, stopWithSignal = false): Promise<Pier> {
         let updatedPier;
         if (stopWithSignal && pier.status === 'running' && pier.pid && await this.processExists(pier.pid)) {
-            // if we're only stopping via signal, we can speed up by using a heuristic instead of full check
             updatedPier = pier;
         } else {
             updatedPier = await this.checkPier(pier);
@@ -572,7 +561,6 @@ export class PierService {
             try {
                 process.kill(ship.pid, platform === 'win' ? 'SIGINT' : 'SIGTERM');
             } catch (err) {
-                // if process somehow doesn't exist (ESRCH), don't throw
                 if (!err.message.toUpperCase().includes('ESRCH')) {
                     throw err;
                 }
@@ -622,7 +610,6 @@ export class PierService {
     }
 
     private getSafePath(pier: Pier) {
-        // urbit binary can't handle paths with spaces so we escape them
         let pierPath = pier.directoryAsPierPath
             ? pier.directory
             : joinPath(pier.directory, pier.slug);
@@ -645,7 +632,7 @@ export class PierService {
         const args = this.getSpawnArgs(pier);
         const runDetached = await this.db.settings.asyncFindOne({ name: 'keep-ships-running' });
 
-        console.log('spawning urbit with ', ...args)
+        console.log('spawning vere with ', ...args)
         let urbit: ChildProcessWithoutNullStreams;
         if (runDetached) {
             urbit = spawn(this.urbitPath, args, { detached: true });
@@ -657,14 +644,31 @@ export class PierService {
         return urbit;
     }
 
+    /**
+     * Locate the Vere binary for the current platform/architecture.
+     * Vere v4.x binaries are named like: vere-v4.3-linux-x86_64
+     * Falls back to matching 'urbit' for older binaries.
+     */
     private async setUrbitPath() {
         const arch = process.arch === 'x64' ? 'x86_64' : 'aarch64';
         const platformFolder = IS_PROD
-            ? joinPath(root, ...getPlatformPathSegments(platform), 'resources', platform)
+            ? joinPath(process.resourcesPath, platform)
             : joinPath(appRootDir.get(), 'resources', platform);
 
-        const binaryName = readdirSync(platformFolder).find(file => file.includes(arch));
+        const files = readdirSync(platformFolder);
+        // Try to find vere binary first (v4.x+), then fall back to urbit binary
+        const binaryName = files.find(file => file.includes('vere') && file.includes(arch))
+            || files.find(file => file.includes('urbit') && file.includes(arch))
+            || files.find(file => file.includes(arch));
+
+        if (!binaryName) {
+            console.error(`No Vere binary found for ${platform}/${arch} in ${platformFolder}`);
+            console.error('Available files:', files);
+            throw new Error(`No Vere binary found for ${platform}/${arch}`);
+        }
+
         this.urbitPath = joinPath(platformFolder, binaryName);
+        console.log(`Using Vere binary: ${this.urbitPath}`);
     }
 
     private getSpawnArgs(pier: Pier, interactive = false): string[] {

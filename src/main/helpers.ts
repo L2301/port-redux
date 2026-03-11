@@ -1,7 +1,7 @@
 import { URL } from 'url'
 import { app, BrowserWindow, WebContents, InputEvent, BrowserWindowConstructorOptions, BrowserView, Session } from "electron";
-import isDev from 'electron-is-dev';
 import { getPlatform } from "../get-platform";
+const isDev = !app.isPackaged;
 import { Pier } from '../background/services/pier-service';
 
 //Taken from https://github.com/nativefier/nativefier/blob/master/app/src/helpers/helpers.ts

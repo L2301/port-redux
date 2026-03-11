@@ -93,3 +93,14 @@ out/
 build/
 
 resources/metamask/
+
+# Vere/Urbit binaries (downloaded by get-vere.sh)
+resources/mac/vere*
+resources/mac/urbit*
+resources/linux/vere*
+resources/linux/urbit*
+resources/win/vere*
+resources/win/urbit*
+
+# Package lock
+package-lock.json

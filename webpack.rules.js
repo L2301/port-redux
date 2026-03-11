@@ -4,16 +4,6 @@ module.exports = [
     test: /\.node$/,
     use: 'node-loader',
   },
-  // {
-  //   test: /\.(m?js|node)$/,
-  //   parser: { amd: false },
-  //   use: {
-  //     loader: '@vercel/webpack-asset-relocator-loader',
-  //     options: {
-  //       outputAssetBase: 'native_modules',
-  //     },
-  //   },
-  // },
   {
     test: /conpty_console_list_agent/,
     loader: 'string-replace-loader',
@@ -22,17 +12,13 @@ module.exports = [
       replace: 'build/Release'
     }
   },
+  // Webpack 5 asset modules (replaces file-loader)
   {
     test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
-    use: [
-      {
-        loader: 'file-loader',
-        options: {
-          name: '[name].[ext]',
-          outputPath: 'dist/assets/'
-        }
-      }
-    ]
+    type: 'asset/resource',
+    generator: {
+      filename: 'dist/assets/[name][ext]'
+    }
   },
   {
     test: /\.tsx?$/,

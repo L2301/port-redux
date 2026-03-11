@@ -1,7 +1,7 @@
 import os from "os"
 import * as pty from "node-pty";
-import { BrowserWindow, ipcMain } from "electron";
-import isDev from 'electron-is-dev';
+import { app, BrowserWindow, ipcMain } from "electron";
+const isDev = !app.isPackaged;
 declare const TERMINAL_WEBPACK_ENTRY: string;
 
 const shell = os.platform() === "win32" ? "cmd.exe" : "bash";

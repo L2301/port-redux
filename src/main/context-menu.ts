@@ -1,5 +1,6 @@
 import { BrowserView, BrowserWindow, shell } from 'electron';
-import isDev from 'electron-is-dev'
+import { app } from 'electron';
+const isDev = !app.isPackaged;
 import contextMenu from 'electron-context-menu';
 
 //Taken from https://github.com/nativefier/nativefier/blob/master/app/src/components/contextMenu.ts

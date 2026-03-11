@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { HashRouter, Route, Switch, useHistory } from 'react-router-dom'
-import { hot } from 'react-hot-loader';
 import { Welcome } from './pages/Welcome';
 import { Cleanup } from './pages/Cleanup';
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from 'react-query';
@@ -15,7 +14,7 @@ import { CometDetails } from './details/pages/CometDetails';
 import { Boot } from './ship/Boot';
 import { PlanetDetails } from './details/pages/PlanetDetails';
 import { routeMap } from './routes';
-import create from 'zustand';
+import { create } from 'zustand';
 import { pierKey } from './query-keys';
 import { listen, muteHandler, send } from './client/ipc';
 import { Star } from './details/pages/Star';
@@ -46,7 +45,7 @@ interface PortStore {
     }
 }
 
-export const useStore = create<PortStore>(() => ({
+export const useStore = create<PortStore>()(() => ({
     piers: [],
     architectureUnsupported: null,
     archCheckOpen: true,
@@ -90,14 +89,14 @@ const App = () => {
     })
     useQuery(pierKey(), async () => {
         const piers = await send('get-piers')
-        
+
         for (const pier of piers) {
             await send('check-pier', pier);
         }
 
         return send('get-piers')
     }, {
-        refetchInterval: 60 * 1000, // once per minute
+        refetchInterval: 60 * 1000,
         refetchIntervalInBackground: true,
         refetchOnWindowFocus: true,
         onSuccess: (piers) => {
@@ -115,7 +114,7 @@ const App = () => {
     useEffect(() => {
         const listener = (event, args) => {
             useStore.setState({ zoomLevels: args })
-        } 
+        }
 
         ipcRenderer.on('zoom-levels', listener);
 
@@ -149,7 +148,7 @@ const App = () => {
     }, [])
 
     return (
-        <Switch>                        
+        <Switch>
             <Route exact path={routeMap.remote.path} component={RemotePierDetails} />
             <Route exact path={routeMap.existing.path} component={ExistingShipDetails} />
             <Route exact path={routeMap.planet.path} component={PlanetDetails} />
@@ -163,8 +162,8 @@ const App = () => {
             <Route path="/settings" component={SettingsPage} />
             <Route exact path="/" component={Welcome} />
             <Route exact path="/cleanup" component={Cleanup} />
-        </Switch>    
+        </Switch>
     );
 }
 
-export default hot(module)(AppWrapped);
+export default AppWrapped;

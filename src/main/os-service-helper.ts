@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { app, autoUpdater, BrowserView, BrowserWindow, dialog, ipcMain, IpcMainInvokeEvent, nativeTheme } from 'electron'
-import isDev from 'electron-is-dev'
+const isDev = !app.isPackaged;
 import { ViewData } from '../background/services/os-service';
 import { initContextMenu } from './context-menu';
 import { onNavigation } from './helpers';

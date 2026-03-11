@@ -1,6 +1,6 @@
 import { BrowserWindow, dialog, Event, BrowserWindowConstructorOptions, WebContents, nativeTheme, app, ipcMain, Session } from 'electron';
 import windowStateKeeper from 'electron-window-state';
-import isDev from 'electron-is-dev';
+const isDev = !app.isPackaged;
 
 import {
   isOSX,

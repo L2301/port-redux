@@ -7,9 +7,6 @@ require('dotenv').config()
 module.exports = {
   packagerConfig: {
     appBundleId: 'dev.hmiller.port',
-    // asar: {
-    //   unpack: '**/node_modules/node-pty/build/Release/*'
-    // },
     name: 'port',
     executableName: 'port',
     darwinDarkModeSupport: 'true',
@@ -36,30 +33,44 @@ module.exports = {
     osxNotarize: {
       appleId: process.env.APPLE_ID,
       appleIdPassword: process.env.APPLE_ID_PASSWORD,
-      ascProvider: '8YA38DLJ3T'
+      teamId: '8YA38DLJ3T'
     },
     win32metadata: {
       CompanyName: 'Urbit Foundation'
     }
   },
   hooks: {
-    packageAfterCopy: (forgeConfig, buildPath, electronVersion, platform) => {
+    packageAfterCopy: async (forgeConfig, buildPath, electronVersion, platform) => {
       const os = gp.getPlatform(platform)
-      fse.copySync(path.join(AppRootDir.get(), 'resources', os), path.resolve(buildPath, ...gp.getPlatformPathSegments(os), 'resources', os), {
-        filter: (src) => !src.includes('.gitignore')
-      })
-      console.log({ platform, os })
+      const srcDir = path.join(AppRootDir.get(), 'resources', os);
+
+      // buildPath points to the app's source directory inside the packaged output.
+      // For macOS: .../port.app/Contents/Resources/app/
+      // For Linux/Windows: .../resources/app/
+      // We need to go up to the resources dir and place binaries there.
+      const destDir = path.resolve(buildPath, '..', os);
+
+      console.log(`Vere copy: platform=${os}, buildPath=${buildPath}, destDir=${destDir}`);
+
+      if (fse.existsSync(srcDir)) {
+        fse.copySync(srcDir, destDir, {
+          filter: (src) => !src.includes('.gitignore')
+        });
+        console.log(`Copied Vere binaries: ${os} -> ${destDir}`);
+      } else {
+        console.warn(`No Vere binaries found for ${os} at ${srcDir} — skipping`);
+      }
     },
     postMake: (forgeConfig, makeResults) => {
       if (process.env.GITHUB_WORKFLOW === 'Publish MacOS — arm64') {
           let updatedResults = []
           for (let makeResult of makeResults) {
             let artifacts = makeResult.artifacts
-            let oldPath = artifacts.find(path => path.includes('.dmg'))
+            let oldPath = artifacts.find(p => p.includes('.dmg'))
             if (oldPath) {
               let newPath = path.join(path.dirname(oldPath), 'Port-arm64.dmg')
               fse.renameSync(oldPath, newPath)
-              makeResult.artifacts = artifacts.filter(path => !path.includes('.dmg'))
+              makeResult.artifacts = artifacts.filter(p => !p.includes('.dmg'))
               makeResult.artifacts.push(newPath)
             }
 
@@ -89,38 +100,10 @@ module.exports = {
       name: "@electron-forge/maker-zip",
       platforms: [
         "darwin",
-        "linux"
+        "linux",
+        "win32"
       ]
     },
-    // {
-    //   name: '@electron-forge/maker-flatpak',
-    //   config: {
-    //     options: {
-    //       id: 'org.urbit.port',
-    //       productName: 'Port',
-    //       description: 'Host an Urbit from your computer in just a few clicks. Use your own planet, moon, or comet to join the network, no technical knowhow required.',
-    //       cagegories: ['Network'],
-    //       icon: {
-    //         "256x256": "icons/urbit-logo-256.png"
-    //       },
-    //       base: 'org.electronjs.Electron2.BaseApp',
-    //       baseVersion: '21.08',
-    //       runtimeVersion: '21.08'
-    //     },
-    //     modules: [
-    //       {
-    //         "name": "zypak",
-    //         "sources": [
-    //           {
-    //             "type": "git",
-    //             "url": "https://github.com/refi64/zypak",
-    //             "tag": "v2022.04"
-    //           }
-    //         ]
-    //       }
-    //     ]
-    //   }
-    // },
     {
       name: "@electron-forge/maker-deb",
       config: {
@@ -130,18 +113,15 @@ module.exports = {
           depends: [
             "libx11-xcb1"
           ]
-        }        
+        }
       }
     },
     {
-      name: "@davidwinter/electron-forge-maker-snap",
+      name: "@electron-forge/maker-rpm",
       config: {
-        grade: process.env.DEV ? 'devel' : 'stable',
-        execFlags: '%u',
-        mimeTypes: 'x-scheme-handler/web+urbitgraph',
-        stagePackages: ['default', 'libx11-xcb1', 'fonts-noto', 'fonts-noto-color-emoji'],
-        categories: 'Utility',
-        description: "This app allows you to spin up, access, and manage your Urbit ships whether they are comets, planets or potentially stars. It gives people the ability to immediately download and run Urbit without any knowledge of the command line.",
+        options: {
+          icon: "icons/urbit-logo.png"
+        }
       }
     }
   ],
@@ -158,9 +138,9 @@ module.exports = {
     }
   ],
   plugins: [
-    [
-      "@electron-forge/plugin-webpack",
-      {
+    {
+      name: "@electron-forge/plugin-webpack",
+      config: {
         mainConfig: "./src/main/webpack.main.config.js",
         renderer: {
           config: "./src/renderer/webpack.renderer.config.js",
@@ -193,7 +173,7 @@ module.exports = {
               name: "prompt"
             },
             {
-              html: "./src/background/server/server.html", //just using for blank
+              html: "./src/background/server/server.html",
               js: "./src/renderer/landscape-preload.ts",
               name: "landscape",
               preload: {
@@ -203,6 +183,6 @@ module.exports = {
           ]
         }
       }
-    ]
+    }
   ]
 }
