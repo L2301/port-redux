@@ -130,8 +130,8 @@ module.exports = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: 'urbit',
-          name: 'port'
+          owner: 'L2301',
+          name: 'port-redux'
         },
         draft: true
       }

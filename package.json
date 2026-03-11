@@ -5,7 +5,7 @@
   "description": "A ship runner and manager for Urbit OS — compatible with Vere v4.x",
   "repository": {
     "type": "git",
-    "url": "https://github.com/urbit/port.git"
+    "url": "https://github.com/L2301/port-redux.git"
   },
   "keywords": ["urbit", "vere", "ship-manager"],
   "author": {

@@ -6,7 +6,7 @@ A desktop application for running and managing [Urbit](https://urbit.org) ships.
 
 ## Installing
 
-Head over to [releases](https://github.com/urbit/port/releases) and download the installer for your operating system.
+Head over to [releases](https://github.com/L2301/port-redux/releases) and download the installer for your operating system.
 
 | Platform | Format |
 |----------|--------|
@@ -30,8 +30,8 @@ Head over to [releases](https://github.com/urbit/port/releases) and download the
 
 ```bash
 # Clone the repository
-git clone https://github.com/urbit/port.git
-cd port
+git clone https://github.com/L2301/port-redux.git
+cd port-redux
 
 # Install dependencies
 npm install
