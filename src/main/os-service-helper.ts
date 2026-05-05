@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { app, autoUpdater, BrowserView, BrowserWindow, dialog, ipcMain, IpcMainInvokeEvent, nativeTheme } from 'electron'
+import { app, autoUpdater, BrowserView, BrowserWindow, dialog, ipcMain, IpcMainEvent, IpcMainInvokeEvent, nativeTheme } from 'electron'
 const isDev = !app.isPackaged;
 import { ViewData } from '../background/services/os-service';
 import { initContextMenu } from './context-menu';
@@ -26,7 +26,7 @@ async function clearData(window: BrowserWindow) {
     //possibly clear everything not sure what's the issue
     await session.clearCache()
     await session.clearStorageData({
-        storages: ['appcache', 'filesystem', 'indexdb', 'localstorage', 'cachestorage']
+        storages: ['filesystem', 'indexdb', 'localstorage', 'cachestorage']
     })
 }
 
@@ -79,7 +79,8 @@ async function createView(mainWindow: BrowserWindow, createNewWindow, onNewWindo
                 withCredentials: true
             });
     
-            const cookie = response.headers['set-cookie'];
+            const cookieHeader = response.headers['set-cookie'];
+            const cookie = Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader;
             const parts = new RegExp(/(urbauth-~[\w-]+)=(.*); Path=\/;/).exec(cookie || '');
     
             isDev && console.log(cookie);
@@ -203,7 +204,7 @@ function installUpdates(bgWindow: BrowserWindow) {
     }
 }
 
-function prompt(event: IpcMainInvokeEvent, args: any) {
+function prompt(event: IpcMainEvent, args: any) {
     promptResponse = null;
 
     let promptWindow = new BrowserWindow({

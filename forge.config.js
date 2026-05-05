@@ -22,19 +22,25 @@ module.exports = {
       NSMicrophoneUsageDescription: "We need access to your microphone for Urbit apps",
       NSCameraUsageDescription: "We need access to your camera for Urbit apps"
     },
-    osxSign: {
-      identity: 'Developer ID Application: Hunter Miller (8YA38DLJ3T)',
-      "entitlements": "entitlements.plist",
-      "entitlements-inherit": "entitlements.plist",
-      'hardened-runtime': true,
-      'gatekeeper-assess': false,
-      'signature-flags': 'library',
-    },
-    osxNotarize: {
-      appleId: process.env.APPLE_ID,
-      appleIdPassword: process.env.APPLE_ID_PASSWORD,
-      teamId: '8YA38DLJ3T'
-    },
+    // Code signing/notarization opt-in via env vars so contributors without
+    // an Apple Developer identity can still build a runnable (unsigned) app.
+    ...(process.env.APPLE_SIGNING_IDENTITY ? {
+      osxSign: {
+        identity: process.env.APPLE_SIGNING_IDENTITY,
+        "entitlements": "entitlements.plist",
+        "entitlements-inherit": "entitlements.plist",
+        'hardened-runtime': true,
+        'gatekeeper-assess': false,
+        'signature-flags': 'library',
+      },
+    } : {}),
+    ...(process.env.APPLE_ID && process.env.APPLE_ID_PASSWORD && process.env.APPLE_TEAM_ID ? {
+      osxNotarize: {
+        appleId: process.env.APPLE_ID,
+        appleIdPassword: process.env.APPLE_ID_PASSWORD,
+        teamId: process.env.APPLE_TEAM_ID,
+      },
+    } : {}),
     win32metadata: {
       CompanyName: 'Urbit Foundation'
     }
@@ -60,6 +66,36 @@ module.exports = {
       } else {
         console.warn(`No Vere binaries found for ${os} at ${srcDir} — skipping`);
       }
+
+      // The webpack plugin marks native deps as externals (so their .node
+      // binaries survive bundling) but does not copy them into the packaged
+      // app. Copy them and their transitive deps from the source node_modules
+      // into resources/app/node_modules.
+      const nativeDeps = ['node-pty', 'nedb', 'nedb-async', 'node-ipc'];
+      const srcNodeModules = path.join(AppRootDir.get(), 'node_modules');
+      const destNodeModules = path.join(buildPath, 'node_modules');
+
+      const copied = new Set();
+      const copyDep = (name) => {
+        if (copied.has(name)) return;
+        const src = path.join(srcNodeModules, name);
+        if (!fse.existsSync(src)) {
+          console.warn(`Native dep not found in node_modules: ${name}`);
+          return;
+        }
+        copied.add(name);
+        fse.copySync(src, path.join(destNodeModules, name), { dereference: true });
+
+        const pkgPath = path.join(src, 'package.json');
+        if (fse.existsSync(pkgPath)) {
+          const pkg = fse.readJsonSync(pkgPath);
+          for (const dep of Object.keys(pkg.dependencies || {})) {
+            copyDep(dep);
+          }
+        }
+      };
+      nativeDeps.forEach(copyDep);
+      console.log(`Copied native deps to ${destNodeModules}: ${[...copied].join(', ')}`);
     },
     postMake: (forgeConfig, makeResults) => {
       if (process.env.GITHUB_WORKFLOW === 'Publish MacOS — arm64') {

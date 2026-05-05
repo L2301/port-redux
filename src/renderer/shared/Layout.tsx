@@ -17,7 +17,8 @@ interface LayoutProps {
     title: string;
     center?: boolean;
     className?: string;
-    footer?: React.ReactElement
+    footer?: React.ReactElement;
+    children?: React.ReactNode;
 }
 
 export const Layout: FunctionComponent<LayoutProps> = ({ children, title, center = true, className = '', footer }) => {

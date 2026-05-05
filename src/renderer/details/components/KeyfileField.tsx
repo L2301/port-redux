@@ -1,7 +1,6 @@
 import React from 'react'
-import { Controller } from 'react-hook-form'
+import { Controller, UseFormReturn, UseControllerProps, ValidateResult } from 'react-hook-form'
 import { Link } from 'react-router-dom'
-import { UseControllerOptions, UseFormMethods, Validate, ValidateResult } from 'react-hook-form/dist/types'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { send } from '../../client/ipc'
 import { AddPier } from '../../../background/services/pier-service'
@@ -9,9 +8,9 @@ import { Dialog, DialogContent } from '../../shared/Dialog'
 import { Question } from '../../icons/Question'
 
 interface KeyfileFieldProps {
-    form: UseFormMethods<AddPier>
-    //validator?: Record<string, Validate>;
-    rules?: UseControllerOptions["rules"];
+    form: UseFormReturn<AddPier>
+    rules?: UseControllerProps<AddPier, 'keyFile'>["rules"];
+    children?: React.ReactNode;
 }
 
 export const KeyfileField: React.FC<KeyfileFieldProps> = ({ form, rules, children }) => {
@@ -35,25 +34,25 @@ export const KeyfileField: React.FC<KeyfileFieldProps> = ({ form, rules, childre
                     control={form.control}
                     defaultValue=""
                     rules={{
-                        ...rules, 
+                        ...rules,
                         validate: {
-                            ...rules.validate,
+                            ...(rules?.validate as Record<string, (v: unknown) => ValidateResult | Promise<ValidateResult>> ?? {}),
                             keyFile: validate
                         }
                     }}
-                    render={({ value, onChange, name, ref }) => (
+                    render={({ field: { value, onChange, name, ref } }) => (
                         <>
-                            <input 
-                                id="directory" 
-                                name={name} 
+                            <input
+                                id="directory"
+                                name={name}
                                 ref={ref}
                                 type="text"
-                                value={value}
-                                className="input flex-1 border border-r-0 rounded-r-none" 
+                                value={value ?? ''}
+                                className="input flex-1 border border-r-0 rounded-r-none"
                                 placeholder="/Users/my-user/sampel-palnet.key"
                                 readOnly={true}
                                 onClick={() => setWarningOpen(true)}
-                                aria-invalid={!!form.errors?.keyFile} 
+                                aria-invalid={!!form.formState.errors?.keyFile}
                             />
                             <button type="button" className="input flex-none flex justify-center items-center hover:border-black focus:border-black dark:hover:border-white dark:focus:border-white default-ring rounded-l-none" onClick={() => setWarningOpen(true)}>
                                 Choose Key File
@@ -87,9 +86,9 @@ export const KeyfileField: React.FC<KeyfileFieldProps> = ({ form, rules, childre
                     )}
                 />
             </div>
-            <span className={`inline-block h-8.5 mt-2 text-xs text-red-600 ${form.errors?.keyFile ? 'visible' : 'invisible'}`} role="alert">
-                { form.errors.keyFile?.type === 'required' && 'Keyfile is required'}
-                { (!form.errors.keyFile || form.errors.keyFile.type === 'keyFile') && 'Keyfile invalid' }
+            <span className={`inline-block h-8.5 mt-2 text-xs text-red-600 ${form.formState.errors?.keyFile ? 'visible' : 'invisible'}`} role="alert">
+                { form.formState.errors.keyFile?.type === 'required' && 'Keyfile is required'}
+                { (!form.formState.errors.keyFile || form.formState.errors.keyFile.type === 'keyFile') && 'Keyfile invalid' }
                 { children }
             </span>
         </>

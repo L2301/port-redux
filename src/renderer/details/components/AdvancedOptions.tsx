@@ -1,13 +1,13 @@
 import React from 'react'
 import * as Collapsible from '@radix-ui/react-collapsible'
-import { UseFormMethods } from 'react-hook-form/dist/types'
+import { UseFormReturn } from 'react-hook-form'
 import { AddPier } from '../../../background/services/pier-service'
 import {ChevronDown} from '../../icons/ChevronDown'
 import {PortField} from './PortField'
 
 type AdvancedOptionsProps = {
   className?: string,
-  form: UseFormMethods<AddPier>,
+  form: UseFormReturn<AddPier>,
   children?: React.ReactNode
 }
 

@@ -83,7 +83,9 @@ export const UpdateNotifier = () => {
                                 <Close className="w-5 h-5" primary="fill-current" />
                             </Popover.Close>
                             <h2><strong>Update Available</strong></h2>
-                            <Popover.Close as={Button} className="ml-6" onClick={install}>Quit and Install</Popover.Close>
+                            <Popover.Close asChild>
+                                <Button className="ml-6" onClick={install}>Quit and Install</Button>
+                            </Popover.Close>
                         </PopoverContent>
                     </Popover.Root>
                 </>    

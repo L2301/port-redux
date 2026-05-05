@@ -87,7 +87,7 @@ export function createMenu({
 
   const viewMenu: MenuItemConstructorOptions = {
     label: '&View',
-    submenu: [
+    submenu: ([
       {
         label: 'Back',
         accelerator: (() => {
@@ -125,7 +125,7 @@ export function createMenu({
         accelerator: 'CmdOrCtrl+R',
         click: (item, focusedWindow) => {
           if (focusedWindow) {
-            focusedWindow.reload();
+            (focusedWindow as BrowserWindow).reload();
           }
         },
       },
@@ -136,7 +136,7 @@ export function createMenu({
           const windows = BrowserWindow.getAllWindows().filter(win => win.title !== 'background');
 
           const windowCount = windows.length;
-          const focusedIndex = windows.indexOf(focusedWindow);
+          const focusedIndex = windows.indexOf(focusedWindow as BrowserWindow);
 
           showWindow(windows[(focusedIndex + 1) % windowCount])
         }
@@ -199,10 +199,9 @@ export function createMenu({
         accelerator: 'CmdOrCtrl+num0',
         click: zoomReset,
       },
-    ].filter(item => !!item),
+    ] as MenuItemConstructorOptions[]).filter(item => !!item),
   };
 
-  
   (viewMenu.submenu as MenuItemConstructorOptions[]).push(
     {
       type: 'separator',
@@ -217,7 +216,7 @@ export function createMenu({
       })(),
       click: (item, focusedWindow) => {
         if (focusedWindow) {
-          toggleDevTools(focusedWindow, bgWindow)
+          toggleDevTools(focusedWindow as BrowserWindow, bgWindow)
         }
       },
     },

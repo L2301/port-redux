@@ -13,7 +13,7 @@ class FixNedb {
             // Detect that the import is from NeDB via the description file
             // dectect for the import. Calling `callback` with no parameters
             // "bails", which proceeds with the normal resolution process.
-            if (!request.descriptionFileData.name === "nedb") {
+            if (!request.descriptionFileData || request.descriptionFileData.name !== "nedb") {
               return callback()
             }
    

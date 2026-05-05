@@ -1,11 +1,11 @@
 import { BrowserView, BrowserWindow, shell } from 'electron';
 import { app } from 'electron';
 const isDev = !app.isPackaged;
-import contextMenu from 'electron-context-menu';
+import contextMenu, { type Options as ContextMenuOptions } from 'electron-context-menu';
 
 //Taken from https://github.com/nativefier/nativefier/blob/master/app/src/components/contextMenu.ts
 export function initContextMenu(createNewWindow, createNewTab, mainUrl, window?): void {
-  const options: contextMenu.Options = {
+  const options: ContextMenuOptions = {
     showInspectElement: isDev,
     prepend: (actions, params, window) => {
       const items = [];

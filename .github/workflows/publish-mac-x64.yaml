@@ -7,16 +7,16 @@ jobs:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js 16
+      - name: Use Node.js 20
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
       - name: Install Packages
-        run: yarn install
+        run: npm ci
       - name: Rebuild Native Modules
         run: npx electron-rebuild
       - name: Get Urbit Binaries
-        run: ./get-urbit.sh
+        run: ./get-vere.sh
       - name: Add MacOS certs
         run: chmod +x add-osx-cert.sh && ./add-osx-cert.sh
         env:
@@ -24,7 +24,7 @@ jobs:
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
       - name: Build & Publish
         run: |
-          yarn run publish --arch x64
+          npm run publish --arch x64
         env:
           APPLE_ID: ${{secrets.APPLE_ID}}
           APPLE_ID_PASSWORD: ${{secrets.APPLE_ID_PASSWORD}}

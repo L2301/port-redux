@@ -60,7 +60,7 @@ export const Welcome = () => {
                                     Add Ship
                                 </DropdownMenu.Trigger>
                             </WindowsBootWarning>
-                            <DropdownMenu.Content as="ul" align="end" sideOffset={-30} className="min-w-52 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 rounded shadow-lg">
+                            <DropdownMenu.Content align="end" sideOffset={-30} className="min-w-52 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 rounded shadow-lg">
                                 { routes.map(route => (
                                     <li key={route.path} className="border-gray-300 dark:border-gray-700">
                                         <Link to={route.path} className="group flex items-center px-5 py-2 hover:text-black dark:hover:text-white focus:text-black dark:focus:text-white focus:outline-none focus:ring-0 transition-colors no-underline">

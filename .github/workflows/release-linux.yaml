@@ -5,16 +5,16 @@ on:
     types: [published]
 jobs:
   publish:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10' 
-      - name: Use Node.js 16
+      - name: Use Node.js 20
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
       # - name: Install flatpak deps
       #   run: |
       #     sudo apt-get install flatpak -y
@@ -30,14 +30,14 @@ jobs:
         env:
           SNAP_TOKEN: ${{secrets.SNAP_TOKEN}}
       - name: Install Packages
-        run: yarn install
+        run: npm ci
       - name: Rebuild Native Modules
         run: npx electron-rebuild
       - name: Get Urbit Binaries
-        run: ./get-urbit.sh
+        run: ./get-vere.sh
       - name: Build & Publish
         run: |
-          yarn run publish
+          npm run publish
           snapcraft upload --release=stable out/make/*.snap
         env:
           SNAPCRAFT_BUILD_ENVIRONMENT: host
