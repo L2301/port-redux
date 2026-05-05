@@ -45,28 +45,27 @@ export const RemotePierDetails = () => {
             <div className="mt-2">
                 <label htmlFor="directory">URL</label>
                 <div className="relative">
-                    <input 
-                        id="directory" 
-                        name="directory"
+                    <input
+                        id="directory"
                         type="text"
-                        ref={form.register({ 
-                            required: true, 
+                        {...form.register('directory', {
+                            required: true,
                             pattern: /^(?:http(s)?:\/\/)[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/,
                             validate: debounce(checkAccessibleUrl, 250)
                         })}
-                        className="input flex w-full mt-2" 
+                        className="input flex w-full mt-2"
                         placeholder="https://myurbit.com"
-                    />                    
-                    {checkUrlStatus === 'checking' && 
+                    />
+                    {checkUrlStatus === 'checking' &&
                         <span className="absolute top-1/2 right-2 inline-flex transform -translate-y-1/2">
                             <Spinner className="h-4 w-4" />
                         </span>
                     }
                 </div>
-                <span className={`inline-block h-8.5 mt-2 text-xs text-red-600 ${form.errors?.directory ? 'visible' : 'invisible'}`} role="alert">
-                    { form.errors.directory?.type === 'required' && 'Url is required'}
-                    { form.errors.directory?.type === 'validate' && 'Url is erroring or inaccessible'}
-                    { (!form.errors.directory || form.errors.directory.type === 'pattern') && 'Url must be valid and include protocol, e.g. https://myurbit.com' }
+                <span className={`inline-block h-8.5 mt-2 text-xs text-red-600 ${form.formState.errors?.directory ? 'visible' : 'invisible'}`} role="alert">
+                    { form.formState.errors.directory?.type === 'required' && 'Url is required'}
+                    { form.formState.errors.directory?.type === 'validate' && 'Url is erroring or inaccessible'}
+                    { (!form.formState.errors.directory || form.formState.errors.directory.type === 'pattern') && 'Url must be valid and include protocol, e.g. https://myurbit.com' }
                 </span>
             </div>
         </DetailsContainer>

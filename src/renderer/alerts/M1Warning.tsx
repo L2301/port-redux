@@ -32,8 +32,8 @@ export const M1Warning = () => {
               <Button onClick={() => send('quit')}>
                   <Close className="w-6 h-6 -ml-1" primary="fill-current" /> Quit Port
               </Button>
-              <DialogClose as={Button}>
-                  I understand, Proceed anyway
+              <DialogClose asChild>
+                  <Button>I understand, Proceed anyway</Button>
               </DialogClose>
           </p>
       </DialogContent>

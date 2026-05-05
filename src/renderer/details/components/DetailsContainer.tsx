@@ -8,6 +8,7 @@ interface DetailsContainerProps {
     title: string;
     buttonDisabled: boolean;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+    children?: React.ReactNode;
 }
 
 export const DetailsContainer: React.FC<DetailsContainerProps> = ({ title, onSubmit, buttonDisabled, children }) => (

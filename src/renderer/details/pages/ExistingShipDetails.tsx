@@ -36,7 +36,7 @@ export const ExistingShipDetails = () => {
             </div>
             <div className="mt-2 mb-8">
                 <label htmlFor="type">Ship Type</label>
-                <select name="type" ref={form.register({ required: true })} className="input ml-3 bg-white dark:bg-black">
+                <select {...form.register('type', { required: true })} className="input ml-3 bg-white dark:bg-black">
                     <option value="planet">Planet</option>
                     <option value="star">Star</option>
                     <option value="moon">Moon</option>
@@ -51,17 +51,17 @@ export const ExistingShipDetails = () => {
                         control={form.control}
                         defaultValue=""
                         rules={{ required: true }}
-                        render={({ value, onChange, name }) => (
+                        render={({ field: { value, onChange, name } }) => (
                             <>
-                                <input 
-                                    id="directory" 
-                                    name={name} 
+                                <input
+                                    id="directory"
+                                    name={name}
                                     type="text"
-                                    value={value}
-                                    className="input flex-1 border border-r-0 rounded-r-none" 
+                                    value={value ?? ''}
+                                    className="input flex-1 border border-r-0 rounded-r-none"
                                     placeholder="/Users/my-user/sampel-palnet"
                                     readOnly={true}
-                                    onClick={async () => onChange(await setDirectory())} 
+                                    onClick={async () => onChange(await setDirectory())}
                                 />
                                 <button type="button" className="input flex-none flex justify-center items-center hover:border-black focus:border-black dark:hover:border-white dark:focus:border-white default-ring rounded-l-none" onClick={async () => onChange(await setDirectory())}>
                                     Choose Directory
@@ -72,7 +72,7 @@ export const ExistingShipDetails = () => {
                 </div>
             </div>
             <div className="flex items-center text-gray-500 dark:text-gray-400">
-                <input id="keep-in-place" type="checkbox" name="shipStays" ref={form.register} className="mr-2"/>
+                <input id="keep-in-place" type="checkbox" {...form.register('shipStays' as never)} className="mr-2"/>
                 <label htmlFor="keep-in-place">Keep pier in current directory</label>
             </div>
             <div className="mt-6">

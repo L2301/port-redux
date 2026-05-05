@@ -20,4 +20,13 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json']
   },
+  // Native modules ship a .node binary that electron-rebuild produces in
+  // node_modules/<pkg>/build/Release. Bundling them through webpack strips
+  // the binary, so leave them as commonjs externals and let electron-forge
+  // copy the node_modules tree into the packaged app.
+  externals: {
+    'node-pty': 'commonjs node-pty',
+    'nedb': 'commonjs nedb',
+    'node-ipc': 'commonjs node-ipc',
+  },
 };

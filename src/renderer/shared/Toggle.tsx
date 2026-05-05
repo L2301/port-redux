@@ -5,7 +5,7 @@ import * as RadixToggle from '@radix-ui/react-toggle';
 type ToggleProps = {
     toggleClass?: string;
     knobClass?: string;
-} & React.PropsWithChildren<RadixToggle.ToggleOwnProps> & React.HTMLProps<HTMLButtonElement>
+} & React.PropsWithChildren<RadixToggle.ToggleProps> & React.HTMLProps<HTMLButtonElement>
 
 export const Toggle: React.FC<ToggleProps> = (
   { defaultPressed, pressed, onPressedChange, disabled, className, toggleClass }

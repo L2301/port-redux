@@ -3,6 +3,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 
 interface WindowsBootWarningProps {
     show?: boolean;
+    children?: React.ReactNode;
 }
 
 export const WindowsBootWarning: FunctionComponent<WindowsBootWarningProps> = ({ show = false, children }) => {
