@@ -23,6 +23,7 @@ import { Settings } from '../background/db';
 import { Settings as SettingsPage } from './pages/Settings';
 import { Pier } from '../background/services/pier-service';
 import { ShipError } from './ship/ShipError';
+import * as Tooltip from '@radix-ui/react-tooltip';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -66,11 +67,13 @@ export const useStore = create<PortStore>()(() => ({
 
 const AppWrapped = () => (
     <QueryClientProvider client={queryClient}>
-        <HashRouter>
-            <ErrorBoundary fallbackRender={ErrorPage}>
-                <App />
-            </ErrorBoundary>
-        </HashRouter>
+        <Tooltip.Provider>
+            <HashRouter>
+                <ErrorBoundary fallbackRender={ErrorPage}>
+                    <App />
+                </ErrorBoundary>
+            </HashRouter>
+        </Tooltip.Provider>
     </QueryClientProvider>
 )
 
